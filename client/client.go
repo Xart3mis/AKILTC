@@ -21,5 +21,7 @@ func main() {
 	// Create a client instance
 	c := pb.NewConsumerClient(conn)
 
-	fmt.Println(c.UpdateClients(context.Background(), &pb.ClientDataRequest{ClientId: "1"}))
+	for {
+		fmt.Println(c.UpdateClients(context.Background(), &pb.ClientDataRequest{ClientId: "1"}))
+	}
 }
