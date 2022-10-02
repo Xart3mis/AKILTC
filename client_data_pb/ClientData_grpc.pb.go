@@ -18,86 +18,86 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// ClientClient is the client API for Client service.
+// ConsumerClient is the client API for Consumer service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ClientClient interface {
-	GetOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataResponse, error)
+type ConsumerClient interface {
+	UpdateClients(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataResponse, error)
 }
 
-type clientClient struct {
+type consumerClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewClientClient(cc grpc.ClientConnInterface) ClientClient {
-	return &clientClient{cc}
+func NewConsumerClient(cc grpc.ClientConnInterface) ConsumerClient {
+	return &consumerClient{cc}
 }
 
-func (c *clientClient) GetOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataResponse, error) {
+func (c *consumerClient) UpdateClients(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataResponse, error) {
 	out := new(ClientDataResponse)
-	err := c.cc.Invoke(ctx, "/client_data_pb.Client/GetOnScreenText", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/UpdateClients", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ClientServer is the server API for Client service.
-// All implementations must embed UnimplementedClientServer
+// ConsumerServer is the server API for Consumer service.
+// All implementations must embed UnimplementedConsumerServer
 // for forward compatibility
-type ClientServer interface {
-	GetOnScreenText(context.Context, *ClientDataRequest) (*ClientDataResponse, error)
-	mustEmbedUnimplementedClientServer()
+type ConsumerServer interface {
+	UpdateClients(context.Context, *ClientDataRequest) (*ClientDataResponse, error)
+	mustEmbedUnimplementedConsumerServer()
 }
 
-// UnimplementedClientServer must be embedded to have forward compatible implementations.
-type UnimplementedClientServer struct {
+// UnimplementedConsumerServer must be embedded to have forward compatible implementations.
+type UnimplementedConsumerServer struct {
 }
 
-func (UnimplementedClientServer) GetOnScreenText(context.Context, *ClientDataRequest) (*ClientDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOnScreenText not implemented")
+func (UnimplementedConsumerServer) UpdateClients(context.Context, *ClientDataRequest) (*ClientDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateClients not implemented")
 }
-func (UnimplementedClientServer) mustEmbedUnimplementedClientServer() {}
+func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
-// UnsafeClientServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ClientServer will
+// UnsafeConsumerServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ConsumerServer will
 // result in compilation errors.
-type UnsafeClientServer interface {
-	mustEmbedUnimplementedClientServer()
+type UnsafeConsumerServer interface {
+	mustEmbedUnimplementedConsumerServer()
 }
 
-func RegisterClientServer(s grpc.ServiceRegistrar, srv ClientServer) {
-	s.RegisterService(&Client_ServiceDesc, srv)
+func RegisterConsumerServer(s grpc.ServiceRegistrar, srv ConsumerServer) {
+	s.RegisterService(&Consumer_ServiceDesc, srv)
 }
 
-func _Client_GetOnScreenText_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Consumer_UpdateClients_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ClientDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ClientServer).GetOnScreenText(ctx, in)
+		return srv.(ConsumerServer).UpdateClients(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/client_data_pb.Client/GetOnScreenText",
+		FullMethod: "/client_data_pb.Consumer/UpdateClients",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ClientServer).GetOnScreenText(ctx, req.(*ClientDataRequest))
+		return srv.(ConsumerServer).UpdateClients(ctx, req.(*ClientDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Client_ServiceDesc is the grpc.ServiceDesc for Client service.
+// Consumer_ServiceDesc is the grpc.ServiceDesc for Consumer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Client_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "client_data_pb.Client",
-	HandlerType: (*ClientServer)(nil),
+var Consumer_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "client_data_pb.Consumer",
+	HandlerType: (*ConsumerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetOnScreenText",
-			Handler:    _Client_GetOnScreenText_Handler,
+			MethodName: "UpdateClients",
+			Handler:    _Consumer_UpdateClients_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -12,6 +12,6 @@ message ClientData {
 message ClientDataRequest { string ClientId = 1; }
 message ClientDataResponse { map<string, ClientData> ClientData = 1; }
 
-service Client {
-    rpc GetOnScreenText(ClientDataRequest) returns (ClientDataResponse);
+service Consumer {
+    rpc UpdateClients(ClientDataRequest) returns (ClientDataResponse);
 }

@@ -19,7 +19,7 @@ func main() {
 	}
 
 	// Create a client instance
-	c := pb.NewClientClient(conn)
+	c := pb.NewConsumerClient(conn)
 
-	fmt.Println(c.GetOnScreenText(context.Background(), &pb.ClientDataRequest{ClientId: "1"}))
+	fmt.Println(c.UpdateClients(context.Background(), &pb.ClientDataRequest{ClientId: "1"}))
 }

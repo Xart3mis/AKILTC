@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"bufio"
 	"log"
 	"net"
+	"os"
 
 	pb "github.com/Xart3mis/GoHkarComms/client_data_pb"
 
@@ -12,11 +13,21 @@ import (
 )
 
 type server struct {
-	pb.ClientServer
+	pb.ConsumerServer
 }
 
-func main() {
+var on_screen_text string = ""
 
+func main() {
+	go func() {
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			on_screen_text = scanner.Text()
+		}
+		if err := scanner.Err(); err != nil {
+			os.Exit(1)
+		}
+	}()
 	// NewServer creates a gRPC server which has no service registered and has not started
 	// to accept requests yet.
 	s := grpc.NewServer()
@@ -32,7 +43,7 @@ func main() {
 	// The first argument is the grpc server instance
 	// The second argument is the service who's methods we want to expose (in our case)
 	// we have put it in this program only
-	pb.RegisterClientServer(s, &server{})
+	pb.RegisterConsumerServer(s, &server{})
 	// Serve accepts incoming connections on the listener lis, creating a new ServerTransport
 	// and service goroutine for each. The service goroutines read gRPC requests and then
 	// call the registered handlers to reply to them.
@@ -43,13 +54,11 @@ func main() {
 
 }
 
-func (s *server) GetOnScreenText(ctx context.Context, in *pb.ClientDataRequest) (*pb.ClientDataResponse, error) {
-	fmt.Println(in)
-
+func (s *server) UpdateClients(ctx context.Context, in *pb.ClientDataRequest) (*pb.ClientDataResponse, error) {
 	return &pb.ClientDataResponse{ClientData: map[string]*pb.ClientData{
 		in.ClientId: {
-			OnScreenText: "hello",
-			ShouldUpdate: true,
+			OnScreenText: on_screen_text,
+			ShouldUpdate: len(on_screen_text) > 0,
 		},
 	},
 	}, nil
