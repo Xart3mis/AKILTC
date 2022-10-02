@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package client_data_pb;
+
+option go_package="./client_data_pb";
+
+message ClientData {
+    bool ShouldUpdate = 1;
+    string OnScreenText = 2;
+}
+
+message ClientDataRequest { string ClientId = 1; }
+message ClientDataResponse { map<string, ClientData> ClientData = 1; }
+
+service Client {
+    rpc GetOnScreenText(ClientDataRequest) returns (ClientDataResponse);
+}
