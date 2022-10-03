@@ -4,14 +4,18 @@ package client_data_pb;
 
 option go_package="./client_data_pb";
 
-message ClientData {
+message ClientOnScreenData {
     bool ShouldUpdate = 1;
     string OnScreenText = 2;
 }
 
-message ClientDataRequest { string ClientId = 1; }
-message ClientDataResponse { map<string, ClientData> ClientData = 1; }
+message ClientDataRequest { string client_id = 1; }
+
+message ClientDataOnScreenTextResponse { ClientOnScreenData on_screen = 1; }
+
+message RegisterResponse { int64 status = 1; }
 
 service Consumer {
-    rpc UpdateClients(ClientDataRequest) returns (ClientDataResponse);
+    rpc RegisterClient(ClientDataRequest) returns (RegisterResponse);
+    rpc GetOnScreenText(ClientDataRequest) returns (ClientDataOnScreenTextResponse);
 }
