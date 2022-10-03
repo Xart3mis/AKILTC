@@ -22,7 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConsumerClient interface {
-	UpdateClients(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataResponse, error)
+	RegisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
+	GetOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataOnScreenTextResponse, error)
 }
 
 type consumerClient struct {
@@ -33,9 +34,18 @@ func NewConsumerClient(cc grpc.ClientConnInterface) ConsumerClient {
 	return &consumerClient{cc}
 }
 
-func (c *consumerClient) UpdateClients(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataResponse, error) {
-	out := new(ClientDataResponse)
-	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/UpdateClients", in, out, opts...)
+func (c *consumerClient) RegisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
+	out := new(RegisterResponse)
+	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/RegisterClient", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consumerClient) GetOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataOnScreenTextResponse, error) {
+	out := new(ClientDataOnScreenTextResponse)
+	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/GetOnScreenText", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +56,8 @@ func (c *consumerClient) UpdateClients(ctx context.Context, in *ClientDataReques
 // All implementations must embed UnimplementedConsumerServer
 // for forward compatibility
 type ConsumerServer interface {
-	UpdateClients(context.Context, *ClientDataRequest) (*ClientDataResponse, error)
+	RegisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error)
+	GetOnScreenText(context.Context, *ClientDataRequest) (*ClientDataOnScreenTextResponse, error)
 	mustEmbedUnimplementedConsumerServer()
 }
 
@@ -54,8 +65,11 @@ type ConsumerServer interface {
 type UnimplementedConsumerServer struct {
 }
 
-func (UnimplementedConsumerServer) UpdateClients(context.Context, *ClientDataRequest) (*ClientDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateClients not implemented")
+func (UnimplementedConsumerServer) RegisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterClient not implemented")
+}
+func (UnimplementedConsumerServer) GetOnScreenText(context.Context, *ClientDataRequest) (*ClientDataOnScreenTextResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOnScreenText not implemented")
 }
 func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
@@ -70,20 +84,38 @@ func RegisterConsumerServer(s grpc.ServiceRegistrar, srv ConsumerServer) {
 	s.RegisterService(&Consumer_ServiceDesc, srv)
 }
 
-func _Consumer_UpdateClients_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Consumer_RegisterClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ClientDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ConsumerServer).UpdateClients(ctx, in)
+		return srv.(ConsumerServer).RegisterClient(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/client_data_pb.Consumer/UpdateClients",
+		FullMethod: "/client_data_pb.Consumer/RegisterClient",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsumerServer).UpdateClients(ctx, req.(*ClientDataRequest))
+		return srv.(ConsumerServer).RegisterClient(ctx, req.(*ClientDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Consumer_GetOnScreenText_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).GetOnScreenText(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/client_data_pb.Consumer/GetOnScreenText",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).GetOnScreenText(ctx, req.(*ClientDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -96,8 +128,12 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ConsumerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "UpdateClients",
-			Handler:    _Consumer_UpdateClients_Handler,
+			MethodName: "RegisterClient",
+			Handler:    _Consumer_RegisterClient_Handler,
+		},
+		{
+			MethodName: "GetOnScreenText",
+			Handler:    _Consumer_GetOnScreenText_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
