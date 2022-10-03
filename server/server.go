@@ -128,14 +128,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "esc", "q":
-			m.typing = true
 			m.showhelplist = false
 			m.showclientlist = false
 			return m, nil
 
 		case "enter":
 			m.clients = client_ids
-			m.typing = false
 
 			// if len(m.textInput.Value()) > 4 && m.textInput.Value()[:4] == "exec" {
 			// 	re := regexp.MustCompile("(`(?:`??[^`]*?`))")
@@ -153,10 +151,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if len(m.textInput.Value()) > 7 && m.textInput.Value()[:7] == "settext" {
 				split_str := strings.Split(m.textInput.Value(), " ")
-				if len(split_str) > 2 {
-					panic("settext only takes 1 argument")
-				}
-				client_onscreentext[current_id] = split_str[1]
+				client_onscreentext[current_id] = strings.Join(split_str[1:], " ")
 			}
 
 			switch m.textInput.Value() {
@@ -177,18 +172,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	if m.typing {
-		m.textInput, cmd = m.textInput.Update(msg)
-		return m, cmd
-	}
+	m.textInput, cmd = m.textInput.Update(msg)
+	return m, cmd
 
-	return m, nil
 }
 
 func (m model) View() string {
-	if m.typing {
-		return m.textInput.View()
-	} else if m.showhelplist {
+	if m.showhelplist {
 		yellow := color.New(color.FgYellow).SprintFunc()
 		green := color.New(color.FgGreen).SprintFunc()
 
