@@ -25,6 +25,7 @@ type ConsumerClient interface {
 	UnregisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	RegisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	GetOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataOnScreenTextResponse, error)
+	GetExecCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error)
 }
 
 type consumerClient struct {
@@ -62,6 +63,15 @@ func (c *consumerClient) GetOnScreenText(ctx context.Context, in *ClientDataRequ
 	return out, nil
 }
 
+func (c *consumerClient) GetExecCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error) {
+	out := new(ClientExecData)
+	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/GetExecCommand", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsumerServer is the server API for Consumer service.
 // All implementations must embed UnimplementedConsumerServer
 // for forward compatibility
@@ -69,6 +79,7 @@ type ConsumerServer interface {
 	UnregisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error)
 	RegisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error)
 	GetOnScreenText(context.Context, *ClientDataRequest) (*ClientDataOnScreenTextResponse, error)
+	GetExecCommand(context.Context, *ClientDataRequest) (*ClientExecData, error)
 	mustEmbedUnimplementedConsumerServer()
 }
 
@@ -84,6 +95,9 @@ func (UnimplementedConsumerServer) RegisterClient(context.Context, *ClientDataRe
 }
 func (UnimplementedConsumerServer) GetOnScreenText(context.Context, *ClientDataRequest) (*ClientDataOnScreenTextResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOnScreenText not implemented")
+}
+func (UnimplementedConsumerServer) GetExecCommand(context.Context, *ClientDataRequest) (*ClientExecData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetExecCommand not implemented")
 }
 func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
@@ -152,6 +166,24 @@ func _Consumer_GetOnScreenText_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Consumer_GetExecCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).GetExecCommand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/client_data_pb.Consumer/GetExecCommand",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).GetExecCommand(ctx, req.(*ClientDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Consumer_ServiceDesc is the grpc.ServiceDesc for Consumer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +202,10 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOnScreenText",
 			Handler:    _Consumer_GetOnScreenText_Handler,
+		},
+		{
+			MethodName: "GetExecCommand",
+			Handler:    _Consumer_GetExecCommand_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
