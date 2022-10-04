@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConsumerClient interface {
+	UnRegisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	RegisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	GetOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataOnScreenTextResponse, error)
 }
@@ -32,6 +33,15 @@ type consumerClient struct {
 
 func NewConsumerClient(cc grpc.ClientConnInterface) ConsumerClient {
 	return &consumerClient{cc}
+}
+
+func (c *consumerClient) UnRegisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
+	out := new(RegisterResponse)
+	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/UnRegisterClient", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *consumerClient) RegisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
@@ -56,6 +66,7 @@ func (c *consumerClient) GetOnScreenText(ctx context.Context, in *ClientDataRequ
 // All implementations must embed UnimplementedConsumerServer
 // for forward compatibility
 type ConsumerServer interface {
+	UnRegisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error)
 	RegisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error)
 	GetOnScreenText(context.Context, *ClientDataRequest) (*ClientDataOnScreenTextResponse, error)
 	mustEmbedUnimplementedConsumerServer()
@@ -65,6 +76,9 @@ type ConsumerServer interface {
 type UnimplementedConsumerServer struct {
 }
 
+func (UnimplementedConsumerServer) UnRegisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnRegisterClient not implemented")
+}
 func (UnimplementedConsumerServer) RegisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterClient not implemented")
 }
@@ -82,6 +96,24 @@ type UnsafeConsumerServer interface {
 
 func RegisterConsumerServer(s grpc.ServiceRegistrar, srv ConsumerServer) {
 	s.RegisterService(&Consumer_ServiceDesc, srv)
+}
+
+func _Consumer_UnRegisterClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).UnRegisterClient(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/client_data_pb.Consumer/UnRegisterClient",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).UnRegisterClient(ctx, req.(*ClientDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Consumer_RegisterClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -127,6 +159,10 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "client_data_pb.Consumer",
 	HandlerType: (*ConsumerServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "UnRegisterClient",
+			Handler:    _Consumer_UnRegisterClient_Handler,
+		},
 		{
 			MethodName: "RegisterClient",
 			Handler:    _Consumer_RegisterClient_Handler,
