@@ -20,17 +20,18 @@ func main() {
 
 	// Create a client instance
 	c := pb.NewConsumerClient(conn)
-	c.RegisterClient(context.Background(), &pb.ClientDataRequest{ClientId: "id_1"})
-	x, err := c.SubscribeOnScreenText(context.Background(), &pb.ClientDataRequest{ClientId: "id_1"})
+	ctx, cancel := context.WithCancel(context.Background())
+	x, err := c.SubscribeOnScreenText(ctx, &pb.ClientDataRequest{ClientId: "id_1"})
 	if err != nil {
 		log.Fatalf("Error while subscribing, %v", err)
 	}
-	for {
-		// uhh, _ := c.GetExecCommand(context.Background(), &pb.ClientDataRequest{ClientId: "id_1"})
-		// if uhh != nil {
-		// 	fmt.Println(uhh)
-		// }
-		// c.SetExecOutput(context.TODO(), &pb.ClientExecOutput{Output: "OK"})
+	for i := 0; i < 10000; i++ {
 		fmt.Println(x.Recv())
 	}
+
+	defer func() {
+		x.CloseSend()
+		cancel()
+		conn.Close()
+	}()
 }

@@ -22,9 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConsumerClient interface {
-	UnregisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	RegisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	SubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (Consumer_SubscribeOnScreenTextClient, error)
+	UnsubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*Void, error)
 	GetExecCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error)
 	SetExecOutput(ctx context.Context, in *ClientExecOutput, opts ...grpc.CallOption) (*Void, error)
 }
@@ -35,24 +34,6 @@ type consumerClient struct {
 
 func NewConsumerClient(cc grpc.ClientConnInterface) ConsumerClient {
 	return &consumerClient{cc}
-}
-
-func (c *consumerClient) UnregisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
-	out := new(RegisterResponse)
-	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/UnregisterClient", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *consumerClient) RegisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
-	out := new(RegisterResponse)
-	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/RegisterClient", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *consumerClient) SubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (Consumer_SubscribeOnScreenTextClient, error) {
@@ -87,6 +68,15 @@ func (x *consumerSubscribeOnScreenTextClient) Recv() (*ClientDataOnScreenTextRes
 	return m, nil
 }
 
+func (c *consumerClient) UnsubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/UnsubscribeOnScreenText", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *consumerClient) GetExecCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error) {
 	out := new(ClientExecData)
 	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/GetExecCommand", in, out, opts...)
@@ -109,9 +99,8 @@ func (c *consumerClient) SetExecOutput(ctx context.Context, in *ClientExecOutput
 // All implementations must embed UnimplementedConsumerServer
 // for forward compatibility
 type ConsumerServer interface {
-	UnregisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error)
-	RegisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error)
 	SubscribeOnScreenText(*ClientDataRequest, Consumer_SubscribeOnScreenTextServer) error
+	UnsubscribeOnScreenText(context.Context, *ClientDataRequest) (*Void, error)
 	GetExecCommand(context.Context, *ClientDataRequest) (*ClientExecData, error)
 	SetExecOutput(context.Context, *ClientExecOutput) (*Void, error)
 	mustEmbedUnimplementedConsumerServer()
@@ -121,14 +110,11 @@ type ConsumerServer interface {
 type UnimplementedConsumerServer struct {
 }
 
-func (UnimplementedConsumerServer) UnregisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UnregisterClient not implemented")
-}
-func (UnimplementedConsumerServer) RegisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterClient not implemented")
-}
 func (UnimplementedConsumerServer) SubscribeOnScreenText(*ClientDataRequest, Consumer_SubscribeOnScreenTextServer) error {
 	return status.Errorf(codes.Unimplemented, "method SubscribeOnScreenText not implemented")
+}
+func (UnimplementedConsumerServer) UnsubscribeOnScreenText(context.Context, *ClientDataRequest) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnsubscribeOnScreenText not implemented")
 }
 func (UnimplementedConsumerServer) GetExecCommand(context.Context, *ClientDataRequest) (*ClientExecData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetExecCommand not implemented")
@@ -147,42 +133,6 @@ type UnsafeConsumerServer interface {
 
 func RegisterConsumerServer(s grpc.ServiceRegistrar, srv ConsumerServer) {
 	s.RegisterService(&Consumer_ServiceDesc, srv)
-}
-
-func _Consumer_UnregisterClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClientDataRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConsumerServer).UnregisterClient(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/client_data_pb.Consumer/UnregisterClient",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsumerServer).UnregisterClient(ctx, req.(*ClientDataRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Consumer_RegisterClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClientDataRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConsumerServer).RegisterClient(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/client_data_pb.Consumer/RegisterClient",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsumerServer).RegisterClient(ctx, req.(*ClientDataRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Consumer_SubscribeOnScreenText_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -204,6 +154,24 @@ type consumerSubscribeOnScreenTextServer struct {
 
 func (x *consumerSubscribeOnScreenTextServer) Send(m *ClientDataOnScreenTextResponse) error {
 	return x.ServerStream.SendMsg(m)
+}
+
+func _Consumer_UnsubscribeOnScreenText_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).UnsubscribeOnScreenText(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/client_data_pb.Consumer/UnsubscribeOnScreenText",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).UnsubscribeOnScreenText(ctx, req.(*ClientDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Consumer_GetExecCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -250,12 +218,8 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ConsumerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "UnregisterClient",
-			Handler:    _Consumer_UnregisterClient_Handler,
-		},
-		{
-			MethodName: "RegisterClient",
-			Handler:    _Consumer_RegisterClient_Handler,
+			MethodName: "UnsubscribeOnScreenText",
+			Handler:    _Consumer_UnsubscribeOnScreenText_Handler,
 		},
 		{
 			MethodName: "GetExecCommand",

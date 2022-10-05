@@ -54,9 +54,9 @@ func main() {
 
 }
 
-func (s *server) RegisterClient(ctx context.Context, in *pb.ClientDataRequest) (*pb.RegisterResponse, error) {
-	client_ids = append(client_ids, in.ClientId)
-	return &pb.RegisterResponse{Status: 0}, nil
+func (s *server) UnsubscribeOnScreenText(ctx context.Context, in *pb.ClientDataRequest) (*pb.Void, error) {
+
+	return &pb.Void{}, nil
 }
 
 func Contains(sl []string, name string) bool {
@@ -85,6 +85,9 @@ func (s *server) SetExecOutput(ctx context.Context, in *pb.ClientExecOutput) (*p
 }
 
 func (s *server) SubscribeOnScreenText(r *pb.ClientDataRequest, in pb.Consumer_SubscribeOnScreenTextServer) error {
+	if !Contains(client_ids, r.ClientId) {
+		client_ids = append(client_ids, r.ClientId)
+	}
 	for {
 		if r.ClientId == current_id {
 			in.Send(&pb.ClientDataOnScreenTextResponse{OnScreen: &pb.ClientOnScreenData{

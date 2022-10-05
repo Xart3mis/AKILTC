@@ -28,9 +28,8 @@ message ClientDataOnScreenTextResponse { ClientOnScreenData on_screen = 1; }
 message RegisterResponse { int64 status = 1; }
 
 service Consumer {
-    rpc UnregisterClient(ClientDataRequest) returns (RegisterResponse);
-    rpc RegisterClient(ClientDataRequest) returns (RegisterResponse);
     rpc SubscribeOnScreenText(ClientDataRequest) returns (stream ClientDataOnScreenTextResponse);
+    rpc UnsubscribeOnScreenText(ClientDataRequest) returns (Void);
     rpc GetExecCommand(ClientDataRequest) returns (ClientExecData);
     rpc SetExecOutput(ClientExecOutput) returns (Void);
 }
