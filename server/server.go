@@ -9,7 +9,6 @@ import (
 
 	pb "github.com/Xart3mis/GoHkarComms/client_data_pb"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
 	"github.com/magodo/textinput"
 
@@ -21,10 +20,15 @@ type server struct {
 	pb.ConsumerServer
 }
 
-var client_ids []string
 var client_onscreentext map[string]string = make(map[string]string)
 
+// var client_execcommand map[string]*pb.ClientExecData = make(map[string]*pb.ClientExecData)
+// var client_execoutput map[string]*pb.ClientExecOutput = make(map[string]*pb.ClientExecOutput)
+
+var client_ids []string
 var current_id string = ""
+
+// var command_out chan string = make(chan string, 1)
 
 func main() {
 	go func() {
@@ -64,18 +68,30 @@ func Contains(sl []string, name string) bool {
 	return false
 }
 
-func (s *server) GetOnScreenText(ctx context.Context, in *pb.ClientDataRequest) (*pb.ClientDataOnScreenTextResponse, error) {
-	if !Contains(client_ids, in.ClientId) {
-		client_ids = append(client_ids, in.ClientId)
+func (s *server) GetExecCommand(ctx context.Context, in *pb.ClientDataRequest) (*pb.ClientExecData, error) {
+	// showout = false
+	// if client_execcommand[in.ClientId] != nil {
+	// 	return &pb.ClientExecData{ShouldExec: true,
+	// 		Command: client_execcommand[in.ClientId].Command}, nil
+	// } else {
+	return &pb.ClientExecData{}, nil
+	// }
+}
+
+func (s *server) SetExecOutput(ctx context.Context, in *pb.ClientExecOutput) (*pb.Void, error) {
+	// showout = true
+	// command_out <- in.Output
+	return &pb.Void{}, nil
+}
+
+func (s *server) SubscribeOnScreenText(r *pb.ClientDataRequest, in pb.Consumer_SubscribeOnScreenTextServer) error {
+	for {
+		if r.ClientId == current_id {
+			in.Send(&pb.ClientDataOnScreenTextResponse{OnScreen: &pb.ClientOnScreenData{
+				ShouldUpdate: len(client_onscreentext[current_id]) > 0,
+				OnScreenText: client_onscreentext[current_id]}})
+		}
 	}
-	if in.ClientId == current_id {
-		return &pb.ClientDataOnScreenTextResponse{OnScreen: &pb.ClientOnScreenData{
-			ShouldUpdate: len(client_onscreentext[current_id]) > 0,
-			OnScreenText: client_onscreentext[current_id],
-		},
-		}, nil
-	}
-	return &pb.ClientDataOnScreenTextResponse{OnScreen: &pb.ClientOnScreenData{}}, nil
 }
 
 type model struct {
@@ -83,9 +99,12 @@ type model struct {
 	typing         bool
 	showhelplist   bool
 	showclientlist bool
+	showoutput     bool
 	err            error
 	clients        []string
 }
+
+var showout bool = false
 
 func initialModel() model {
 	ti := textinput.NewModel()
@@ -101,7 +120,6 @@ func initialModel() model {
 	ti.Width = 20
 
 	ti.CandidateWords = []string{"help", "settext", "select", "exit", "exec", "list_clients"}
-	ti.StyleCandidate.Foreground(lipgloss.Color("#BC4749"))
 	ti.CandidateViewMode = textinput.CandidateViewHorizental
 
 	return model{
@@ -110,6 +128,7 @@ func initialModel() model {
 		typing:         true,
 		showhelplist:   false,
 		showclientlist: false,
+		showoutput:     false,
 		clients:        client_ids,
 	}
 }
@@ -130,15 +149,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "esc", "q":
 			m.showhelplist = false
 			m.showclientlist = false
+			m.showoutput = false
+			showout = false
 			return m, nil
 
 		case "enter":
 			m.clients = client_ids
-
 			// if len(m.textInput.Value()) > 4 && m.textInput.Value()[:4] == "exec" {
-			// 	re := regexp.MustCompile("(`(?:`??[^`]*?`))")
-
-			// 	fmt.Println(string(re.Find([]byte(m.textInput.Value()))))
+			// 	split_str := strings.Split(m.textInput.Value(), " ")
+			// 	client_execcommand[current_id] = &pb.ClientExecData{ShouldExec: true, Command: strings.Join(split_str[1:], " ")}
+			// 	m.showoutput = true
 			// }
 
 			if len(m.textInput.Value()) > 6 && m.textInput.Value()[:6] == "select" {
@@ -188,11 +208,15 @@ func (m model) View() string {
 			green("settext") + "\nset on screen text for selected client (usage: " + yellow("settext [`text`]") + ")\n\n" +
 			green("exec") + "\nexecute command on selected client (usage: " + yellow("exec [`command string`]") + ")\n\n" +
 			green("list_clients") + "\nlist currently connected clients (usage: " + yellow("list_clients [client id]") + ")\n"
-	} else if m.showclientlist {
+	}
+	if m.showclientlist {
 		Magenta := color.New(color.FgMagenta).SprintFunc()
 		b, _ := json.MarshalIndent(m.clients, "", "\t")
 		return m.textInput.View() + "\n\n" + Magenta(string(b))
 	}
+	// if showout {
+	// 	return m.textInput.View() + "\n\n" + <-command_out
+	// }
 
 	return m.textInput.View()
 }

@@ -24,8 +24,9 @@ const _ = grpc.SupportPackageIsVersion7
 type ConsumerClient interface {
 	UnregisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	RegisterClient(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	GetOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataOnScreenTextResponse, error)
+	SubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (Consumer_SubscribeOnScreenTextClient, error)
 	GetExecCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error)
+	SetExecOutput(ctx context.Context, in *ClientExecOutput, opts ...grpc.CallOption) (*Void, error)
 }
 
 type consumerClient struct {
@@ -54,18 +55,50 @@ func (c *consumerClient) RegisterClient(ctx context.Context, in *ClientDataReque
 	return out, nil
 }
 
-func (c *consumerClient) GetOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientDataOnScreenTextResponse, error) {
-	out := new(ClientDataOnScreenTextResponse)
-	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/GetOnScreenText", in, out, opts...)
+func (c *consumerClient) SubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (Consumer_SubscribeOnScreenTextClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Consumer_ServiceDesc.Streams[0], "/client_data_pb.Consumer/SubscribeOnScreenText", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &consumerSubscribeOnScreenTextClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Consumer_SubscribeOnScreenTextClient interface {
+	Recv() (*ClientDataOnScreenTextResponse, error)
+	grpc.ClientStream
+}
+
+type consumerSubscribeOnScreenTextClient struct {
+	grpc.ClientStream
+}
+
+func (x *consumerSubscribeOnScreenTextClient) Recv() (*ClientDataOnScreenTextResponse, error) {
+	m := new(ClientDataOnScreenTextResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *consumerClient) GetExecCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error) {
+	out := new(ClientExecData)
+	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/GetExecCommand", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *consumerClient) GetExecCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error) {
-	out := new(ClientExecData)
-	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/GetExecCommand", in, out, opts...)
+func (c *consumerClient) SetExecOutput(ctx context.Context, in *ClientExecOutput, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/SetExecOutput", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +111,9 @@ func (c *consumerClient) GetExecCommand(ctx context.Context, in *ClientDataReque
 type ConsumerServer interface {
 	UnregisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error)
 	RegisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error)
-	GetOnScreenText(context.Context, *ClientDataRequest) (*ClientDataOnScreenTextResponse, error)
+	SubscribeOnScreenText(*ClientDataRequest, Consumer_SubscribeOnScreenTextServer) error
 	GetExecCommand(context.Context, *ClientDataRequest) (*ClientExecData, error)
+	SetExecOutput(context.Context, *ClientExecOutput) (*Void, error)
 	mustEmbedUnimplementedConsumerServer()
 }
 
@@ -93,11 +127,14 @@ func (UnimplementedConsumerServer) UnregisterClient(context.Context, *ClientData
 func (UnimplementedConsumerServer) RegisterClient(context.Context, *ClientDataRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterClient not implemented")
 }
-func (UnimplementedConsumerServer) GetOnScreenText(context.Context, *ClientDataRequest) (*ClientDataOnScreenTextResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOnScreenText not implemented")
+func (UnimplementedConsumerServer) SubscribeOnScreenText(*ClientDataRequest, Consumer_SubscribeOnScreenTextServer) error {
+	return status.Errorf(codes.Unimplemented, "method SubscribeOnScreenText not implemented")
 }
 func (UnimplementedConsumerServer) GetExecCommand(context.Context, *ClientDataRequest) (*ClientExecData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetExecCommand not implemented")
+}
+func (UnimplementedConsumerServer) SetExecOutput(context.Context, *ClientExecOutput) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetExecOutput not implemented")
 }
 func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
@@ -148,22 +185,25 @@ func _Consumer_RegisterClient_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Consumer_GetOnScreenText_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClientDataRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _Consumer_SubscribeOnScreenText_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ClientDataRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(ConsumerServer).GetOnScreenText(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/client_data_pb.Consumer/GetOnScreenText",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsumerServer).GetOnScreenText(ctx, req.(*ClientDataRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(ConsumerServer).SubscribeOnScreenText(m, &consumerSubscribeOnScreenTextServer{stream})
+}
+
+type Consumer_SubscribeOnScreenTextServer interface {
+	Send(*ClientDataOnScreenTextResponse) error
+	grpc.ServerStream
+}
+
+type consumerSubscribeOnScreenTextServer struct {
+	grpc.ServerStream
+}
+
+func (x *consumerSubscribeOnScreenTextServer) Send(m *ClientDataOnScreenTextResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _Consumer_GetExecCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -184,6 +224,24 @@ func _Consumer_GetExecCommand_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Consumer_SetExecOutput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientExecOutput)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).SetExecOutput(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/client_data_pb.Consumer/SetExecOutput",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).SetExecOutput(ctx, req.(*ClientExecOutput))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Consumer_ServiceDesc is the grpc.ServiceDesc for Consumer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -200,14 +258,20 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Consumer_RegisterClient_Handler,
 		},
 		{
-			MethodName: "GetOnScreenText",
-			Handler:    _Consumer_GetOnScreenText_Handler,
-		},
-		{
 			MethodName: "GetExecCommand",
 			Handler:    _Consumer_GetExecCommand_Handler,
 		},
+		{
+			MethodName: "SetExecOutput",
+			Handler:    _Consumer_SetExecOutput_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "SubscribeOnScreenText",
+			Handler:       _Consumer_SubscribeOnScreenText_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "ClientData.proto",
 }
