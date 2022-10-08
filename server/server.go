@@ -89,10 +89,14 @@ func (s *server) SubscribeOnScreenText(r *pb.ClientDataRequest, in pb.Consumer_S
 		client_ids = append(client_ids, r.ClientId)
 	}
 	for {
-		if r.ClientId == current_id {
+		if r.GetClientId() == current_id {
 			in.Send(&pb.ClientDataOnScreenTextResponse{OnScreen: &pb.ClientOnScreenData{
 				ShouldUpdate: len(client_onscreentext[current_id]) > 0,
 				OnScreenText: client_onscreentext[current_id]}})
+		} else {
+			in.Send(&pb.ClientDataOnScreenTextResponse{OnScreen: &pb.ClientOnScreenData{
+				ShouldUpdate: false,
+				OnScreenText: ""}})
 		}
 	}
 }
