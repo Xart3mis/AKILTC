@@ -23,9 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConsumerClient interface {
 	SubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (Consumer_SubscribeOnScreenTextClient, error)
-	UnsubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*Void, error)
-	GetExecCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error)
-	SetExecOutput(ctx context.Context, in *ClientExecOutput, opts ...grpc.CallOption) (*Void, error)
+	Exec(ctx context.Context, opts ...grpc.CallOption) (Consumer_ExecClient, error)
 }
 
 type consumerClient struct {
@@ -68,31 +66,38 @@ func (x *consumerSubscribeOnScreenTextClient) Recv() (*ClientDataOnScreenTextRes
 	return m, nil
 }
 
-func (c *consumerClient) UnsubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*Void, error) {
-	out := new(Void)
-	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/UnsubscribeOnScreenText", in, out, opts...)
+func (c *consumerClient) Exec(ctx context.Context, opts ...grpc.CallOption) (Consumer_ExecClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Consumer_ServiceDesc.Streams[1], "/client_data_pb.Consumer/Exec", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &consumerExecClient{stream}
+	return x, nil
 }
 
-func (c *consumerClient) GetExecCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error) {
-	out := new(ClientExecData)
-	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/GetExecCommand", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
+type Consumer_ExecClient interface {
+	Send(*ClientExecOutput) error
+	CloseAndRecv() (*ClientExecData, error)
+	grpc.ClientStream
 }
 
-func (c *consumerClient) SetExecOutput(ctx context.Context, in *ClientExecOutput, opts ...grpc.CallOption) (*Void, error) {
-	out := new(Void)
-	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/SetExecOutput", in, out, opts...)
-	if err != nil {
+type consumerExecClient struct {
+	grpc.ClientStream
+}
+
+func (x *consumerExecClient) Send(m *ClientExecOutput) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *consumerExecClient) CloseAndRecv() (*ClientExecData, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	return out, nil
+	m := new(ClientExecData)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // ConsumerServer is the server API for Consumer service.
@@ -100,9 +105,7 @@ func (c *consumerClient) SetExecOutput(ctx context.Context, in *ClientExecOutput
 // for forward compatibility
 type ConsumerServer interface {
 	SubscribeOnScreenText(*ClientDataRequest, Consumer_SubscribeOnScreenTextServer) error
-	UnsubscribeOnScreenText(context.Context, *ClientDataRequest) (*Void, error)
-	GetExecCommand(context.Context, *ClientDataRequest) (*ClientExecData, error)
-	SetExecOutput(context.Context, *ClientExecOutput) (*Void, error)
+	Exec(Consumer_ExecServer) error
 	mustEmbedUnimplementedConsumerServer()
 }
 
@@ -113,14 +116,8 @@ type UnimplementedConsumerServer struct {
 func (UnimplementedConsumerServer) SubscribeOnScreenText(*ClientDataRequest, Consumer_SubscribeOnScreenTextServer) error {
 	return status.Errorf(codes.Unimplemented, "method SubscribeOnScreenText not implemented")
 }
-func (UnimplementedConsumerServer) UnsubscribeOnScreenText(context.Context, *ClientDataRequest) (*Void, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UnsubscribeOnScreenText not implemented")
-}
-func (UnimplementedConsumerServer) GetExecCommand(context.Context, *ClientDataRequest) (*ClientExecData, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetExecCommand not implemented")
-}
-func (UnimplementedConsumerServer) SetExecOutput(context.Context, *ClientExecOutput) (*Void, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetExecOutput not implemented")
+func (UnimplementedConsumerServer) Exec(Consumer_ExecServer) error {
+	return status.Errorf(codes.Unimplemented, "method Exec not implemented")
 }
 func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
@@ -156,58 +153,30 @@ func (x *consumerSubscribeOnScreenTextServer) Send(m *ClientDataOnScreenTextResp
 	return x.ServerStream.SendMsg(m)
 }
 
-func _Consumer_UnsubscribeOnScreenText_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClientDataRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConsumerServer).UnsubscribeOnScreenText(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/client_data_pb.Consumer/UnsubscribeOnScreenText",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsumerServer).UnsubscribeOnScreenText(ctx, req.(*ClientDataRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+func _Consumer_Exec_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ConsumerServer).Exec(&consumerExecServer{stream})
 }
 
-func _Consumer_GetExecCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClientDataRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConsumerServer).GetExecCommand(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/client_data_pb.Consumer/GetExecCommand",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsumerServer).GetExecCommand(ctx, req.(*ClientDataRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+type Consumer_ExecServer interface {
+	SendAndClose(*ClientExecData) error
+	Recv() (*ClientExecOutput, error)
+	grpc.ServerStream
 }
 
-func _Consumer_SetExecOutput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClientExecOutput)
-	if err := dec(in); err != nil {
+type consumerExecServer struct {
+	grpc.ServerStream
+}
+
+func (x *consumerExecServer) SendAndClose(m *ClientExecData) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *consumerExecServer) Recv() (*ClientExecOutput, error) {
+	m := new(ClientExecOutput)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(ConsumerServer).SetExecOutput(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/client_data_pb.Consumer/SetExecOutput",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsumerServer).SetExecOutput(ctx, req.(*ClientExecOutput))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 // Consumer_ServiceDesc is the grpc.ServiceDesc for Consumer service.
@@ -216,25 +185,17 @@ func _Consumer_SetExecOutput_Handler(srv interface{}, ctx context.Context, dec f
 var Consumer_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "client_data_pb.Consumer",
 	HandlerType: (*ConsumerServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "UnsubscribeOnScreenText",
-			Handler:    _Consumer_UnsubscribeOnScreenText_Handler,
-		},
-		{
-			MethodName: "GetExecCommand",
-			Handler:    _Consumer_GetExecCommand_Handler,
-		},
-		{
-			MethodName: "SetExecOutput",
-			Handler:    _Consumer_SetExecOutput_Handler,
-		},
-	},
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "SubscribeOnScreenText",
 			Handler:       _Consumer_SubscribeOnScreenText_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "Exec",
+			Handler:       _Consumer_Exec_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "ClientData.proto",
