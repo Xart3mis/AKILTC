@@ -4,6 +4,7 @@ package client_data_pb;
 
 option go_package="./client_data_pb";
 
+
 message ClientOnScreenData {
     bool ShouldUpdate = 1;
     string OnScreenText = 2;
@@ -14,20 +15,20 @@ message ClientExecData {
     string Command = 2;
 }
 
-message Void {}
-
 message ClientExecOutput {
-    string id = 1;
-    string output = 2;
+    ClientDataRequest id = 1;
+    bytes output = 2;
 }
+
+message Void {}
 
 message ClientDataRequest { string client_id = 1; }
 
 message ClientDataOnScreenTextResponse { ClientOnScreenData on_screen = 1; }
 
-message RegisterResponse { int64 status = 1; }
 
 service Consumer {
     rpc SubscribeOnScreenText(ClientDataRequest) returns (stream ClientDataOnScreenTextResponse);
-    rpc Exec(stream ClientExecOutput) returns (ClientExecData);
+    rpc GetCommand(ClientDataRequest) returns (ClientExecData);
+    rpc SetCommandOutput(ClientExecOutput) returns (Void);
 }
