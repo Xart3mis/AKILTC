@@ -1,5 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/Xart3mis/GoHkarComms v0.0.0-20221009203727-6be17b664061 h1:h8NeeTh8s1ugyTxPbsxpZk3iwFfkOrbbNUuQlAcXSLE=
+github.com/Xart3mis/GoHkarComms v0.0.0-20221009203727-6be17b664061/go.mod h1:vJuAjruZyVqY4ZbbgH9AFZI5gHKME6FtvBfPr47VjWg=
 github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=
 github.com/atotto/clipboard v0.1.4/go.mod h1:ZY9tmq7sm5xIbd9bOK4onWV4S6X0u6GY7Vn0Yu86PYI=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
