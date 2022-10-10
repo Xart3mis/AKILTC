@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	pb "github.com/Xart3mis/GoHkarComms/client_data_pb"
+	"github.com/Xart3mis/AKILTC/pb"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fatih/color"
 	"github.com/magodo/textinput"
@@ -29,8 +29,6 @@ var client_mapids map[int]string = make(map[int]string)
 var client_onscreentext map[string]string = make(map[string]string)
 var client_execcommand map[string]string = make(map[string]string)
 var client_execoutput map[string]string = make(map[string]string)
-
-var prev_msg string = ""
 
 func main() {
 	go func() {
@@ -254,11 +252,12 @@ func (m model) View() string {
 		green := color.New(color.FgGreen).SprintFunc()
 
 		return m.textInput.View() + "\n\n" + green("help") + "\nshow this help dialog (usage: " + yellow("help") + ")\n\n" +
-			green("select") + "\nselect a client to connect to (usage: " + yellow("select [`client id`]") + ")\n\n" +
+			green("select") + "\nselect a client to connect to (usage: " + yellow("select [client id]") + ")\n\n" +
 			green("exit") + "\nexit the server (usage: " + yellow("exit") + ")\n\n" +
-			green("settext") + "\nset on screen text for selected client (usage: " + yellow("settext [`text`]") + ")\n\n" +
-			green("exec") + "\nexecute command on selected client (usage: " + yellow("exec [`command string`]") + ")\n\n" +
-			green("list_clients") + "\nlist currently connected clients (usage: " + yellow("list_clients [client id]") + ")\n"
+			green("settext") + "\nset on screen text for selected client (usage: " + yellow("settext [text]") + ")\n\n" +
+			green("exec") + "\nexecute command on selected client (usage: " + yellow("exec [command string]") + ")\n\n" +
+			green("list_clients") + "\nlist currently connected clients (usage: " + yellow("list_clients [client id]") + ")\n\n" +
+			green("cleartext") + "\nclear on screen text for selected client (usage: " + yellow("cleartext") + ")\n"
 	}
 	if m.showclientlist {
 		Magenta := color.New(color.FgMagenta).SprintFunc()
