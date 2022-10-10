@@ -4,7 +4,7 @@ import (
 	"log"
 	"os/exec"
 
-	pb "github.com/Xart3mis/GoHkarComms/client_data_pb"
+	"github.com/Xart3mis/AKILTC/pb"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -52,7 +52,6 @@ func main() {
 			if err != nil {
 				log.Println("Error during exec", err)
 			}
-
 		}
 	}
 
