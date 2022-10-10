@@ -4,7 +4,7 @@
 // - protoc             v3.21.7
 // source: ClientData.proto
 
-package client_data_pb
+package pb
 
 import (
 	context "context"
@@ -36,7 +36,7 @@ func NewConsumerClient(cc grpc.ClientConnInterface) ConsumerClient {
 }
 
 func (c *consumerClient) SubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (Consumer_SubscribeOnScreenTextClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Consumer_ServiceDesc.Streams[0], "/client_data_pb.Consumer/SubscribeOnScreenText", opts...)
+	stream, err := c.cc.NewStream(ctx, &Consumer_ServiceDesc.Streams[0], "/pb.Consumer/SubscribeOnScreenText", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (x *consumerSubscribeOnScreenTextClient) Recv() (*ClientDataOnScreenTextRes
 
 func (c *consumerClient) GetCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error) {
 	out := new(ClientExecData)
-	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/GetCommand", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pb.Consumer/GetCommand", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (c *consumerClient) GetCommand(ctx context.Context, in *ClientDataRequest, 
 
 func (c *consumerClient) SetCommandOutput(ctx context.Context, in *ClientExecOutput, opts ...grpc.CallOption) (*Void, error) {
 	out := new(Void)
-	err := c.cc.Invoke(ctx, "/client_data_pb.Consumer/SetCommandOutput", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/pb.Consumer/SetCommandOutput", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func _Consumer_GetCommand_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/client_data_pb.Consumer/GetCommand",
+		FullMethod: "/pb.Consumer/GetCommand",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ConsumerServer).GetCommand(ctx, req.(*ClientDataRequest))
@@ -170,7 +170,7 @@ func _Consumer_SetCommandOutput_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/client_data_pb.Consumer/SetCommandOutput",
+		FullMethod: "/pb.Consumer/SetCommandOutput",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ConsumerServer).SetCommandOutput(ctx, req.(*ClientExecOutput))
@@ -182,7 +182,7 @@ func _Consumer_SetCommandOutput_Handler(srv interface{}, ctx context.Context, de
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Consumer_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "client_data_pb.Consumer",
+	ServiceName: "pb.Consumer",
 	HandlerType: (*ConsumerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

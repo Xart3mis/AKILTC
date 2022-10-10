@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package client_data_pb;
+package pb;
 
-option go_package="./client_data_pb";
+option go_package="./pb";
 
 
 message ClientOnScreenData {
