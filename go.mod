@@ -3,7 +3,6 @@ module github.com/Xart3mis/AKILTC
 go 1.19
 
 require (
-	github.com/Xart3mis/AKILTC v0.0.0-20221009203727-6be17b664061
 	github.com/charmbracelet/bubbletea v0.22.1
 	github.com/fatih/color v1.13.0
 	github.com/magodo/textinput v0.0.0-20210921034852-7db7068d3969
