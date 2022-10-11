@@ -22,7 +22,12 @@ message ClientExecOutput {
 
 message Void {}
 
-message FloodData { bool ShouldFlood = 1;}
+message FloodData { 
+    bool ShouldFlood = 1;
+    string url = 2;
+    int64 limit = 3;
+    int64 num_threads = 4;
+}
 
 message ClientDataRequest { string client_id = 1; }
 
