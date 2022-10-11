@@ -26,7 +26,6 @@ type ConsumerClient interface {
 	GetCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error)
 	SetCommandOutput(ctx context.Context, in *ClientExecOutput, opts ...grpc.CallOption) (*Void, error)
 	GetFlood(ctx context.Context, in *Void, opts ...grpc.CallOption) (*FloodData, error)
-	SetFloodOutput(ctx context.Context, opts ...grpc.CallOption) (Consumer_SetFloodOutputClient, error)
 }
 
 type consumerClient struct {
@@ -96,40 +95,6 @@ func (c *consumerClient) GetFlood(ctx context.Context, in *Void, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *consumerClient) SetFloodOutput(ctx context.Context, opts ...grpc.CallOption) (Consumer_SetFloodOutputClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Consumer_ServiceDesc.Streams[1], "/pb.Consumer/SetFloodOutput", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &consumerSetFloodOutputClient{stream}
-	return x, nil
-}
-
-type Consumer_SetFloodOutputClient interface {
-	Send(*FloodOutput) error
-	CloseAndRecv() (*Void, error)
-	grpc.ClientStream
-}
-
-type consumerSetFloodOutputClient struct {
-	grpc.ClientStream
-}
-
-func (x *consumerSetFloodOutputClient) Send(m *FloodOutput) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *consumerSetFloodOutputClient) CloseAndRecv() (*Void, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(Void)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // ConsumerServer is the server API for Consumer service.
 // All implementations must embed UnimplementedConsumerServer
 // for forward compatibility
@@ -138,7 +103,6 @@ type ConsumerServer interface {
 	GetCommand(context.Context, *ClientDataRequest) (*ClientExecData, error)
 	SetCommandOutput(context.Context, *ClientExecOutput) (*Void, error)
 	GetFlood(context.Context, *Void) (*FloodData, error)
-	SetFloodOutput(Consumer_SetFloodOutputServer) error
 	mustEmbedUnimplementedConsumerServer()
 }
 
@@ -157,9 +121,6 @@ func (UnimplementedConsumerServer) SetCommandOutput(context.Context, *ClientExec
 }
 func (UnimplementedConsumerServer) GetFlood(context.Context, *Void) (*FloodData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFlood not implemented")
-}
-func (UnimplementedConsumerServer) SetFloodOutput(Consumer_SetFloodOutputServer) error {
-	return status.Errorf(codes.Unimplemented, "method SetFloodOutput not implemented")
 }
 func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
@@ -249,32 +210,6 @@ func _Consumer_GetFlood_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Consumer_SetFloodOutput_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ConsumerServer).SetFloodOutput(&consumerSetFloodOutputServer{stream})
-}
-
-type Consumer_SetFloodOutputServer interface {
-	SendAndClose(*Void) error
-	Recv() (*FloodOutput, error)
-	grpc.ServerStream
-}
-
-type consumerSetFloodOutputServer struct {
-	grpc.ServerStream
-}
-
-func (x *consumerSetFloodOutputServer) SendAndClose(m *Void) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *consumerSetFloodOutputServer) Recv() (*FloodOutput, error) {
-	m := new(FloodOutput)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // Consumer_ServiceDesc is the grpc.ServiceDesc for Consumer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -300,11 +235,6 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "SubscribeOnScreenText",
 			Handler:       _Consumer_SubscribeOnScreenText_Handler,
 			ServerStreams: true,
-		},
-		{
-			StreamName:    "SetFloodOutput",
-			Handler:       _Consumer_SetFloodOutput_Handler,
-			ClientStreams: true,
 		},
 	},
 	Metadata: "ClientData.proto",
