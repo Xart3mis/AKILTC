@@ -25,7 +25,7 @@ type ConsumerClient interface {
 	SubscribeOnScreenText(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (Consumer_SubscribeOnScreenTextClient, error)
 	GetCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error)
 	SetCommandOutput(ctx context.Context, in *ClientExecOutput, opts ...grpc.CallOption) (*Void, error)
-	GetFlood(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*FloodData, error)
+	GetFlood(ctx context.Context, in *Void, opts ...grpc.CallOption) (*FloodData, error)
 	SetFloodOutput(ctx context.Context, opts ...grpc.CallOption) (Consumer_SetFloodOutputClient, error)
 }
 
@@ -87,7 +87,7 @@ func (c *consumerClient) SetCommandOutput(ctx context.Context, in *ClientExecOut
 	return out, nil
 }
 
-func (c *consumerClient) GetFlood(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*FloodData, error) {
+func (c *consumerClient) GetFlood(ctx context.Context, in *Void, opts ...grpc.CallOption) (*FloodData, error) {
 	out := new(FloodData)
 	err := c.cc.Invoke(ctx, "/pb.Consumer/GetFlood", in, out, opts...)
 	if err != nil {
@@ -137,7 +137,7 @@ type ConsumerServer interface {
 	SubscribeOnScreenText(*ClientDataRequest, Consumer_SubscribeOnScreenTextServer) error
 	GetCommand(context.Context, *ClientDataRequest) (*ClientExecData, error)
 	SetCommandOutput(context.Context, *ClientExecOutput) (*Void, error)
-	GetFlood(context.Context, *ClientDataRequest) (*FloodData, error)
+	GetFlood(context.Context, *Void) (*FloodData, error)
 	SetFloodOutput(Consumer_SetFloodOutputServer) error
 	mustEmbedUnimplementedConsumerServer()
 }
@@ -155,7 +155,7 @@ func (UnimplementedConsumerServer) GetCommand(context.Context, *ClientDataReques
 func (UnimplementedConsumerServer) SetCommandOutput(context.Context, *ClientExecOutput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetCommandOutput not implemented")
 }
-func (UnimplementedConsumerServer) GetFlood(context.Context, *ClientDataRequest) (*FloodData, error) {
+func (UnimplementedConsumerServer) GetFlood(context.Context, *Void) (*FloodData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFlood not implemented")
 }
 func (UnimplementedConsumerServer) SetFloodOutput(Consumer_SetFloodOutputServer) error {
@@ -232,7 +232,7 @@ func _Consumer_SetCommandOutput_Handler(srv interface{}, ctx context.Context, de
 }
 
 func _Consumer_GetFlood_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClientDataRequest)
+	in := new(Void)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func _Consumer_GetFlood_Handler(srv interface{}, ctx context.Context, dec func(i
 		FullMethod: "/pb.Consumer/GetFlood",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsumerServer).GetFlood(ctx, req.(*ClientDataRequest))
+		return srv.(ConsumerServer).GetFlood(ctx, req.(*Void))
 	}
 	return interceptor(ctx, in, info, handler)
 }

