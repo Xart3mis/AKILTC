@@ -26,6 +26,7 @@ type ConsumerClient interface {
 	GetCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error)
 	SetCommandOutput(ctx context.Context, in *ClientExecOutput, opts ...grpc.CallOption) (*Void, error)
 	GetFlood(ctx context.Context, in *Void, opts ...grpc.CallOption) (*FloodData, error)
+	GetDialog(ctx context.Context, in *Void, opts ...grpc.CallOption) (*DialogData, error)
 }
 
 type consumerClient struct {
@@ -95,6 +96,15 @@ func (c *consumerClient) GetFlood(ctx context.Context, in *Void, opts ...grpc.Ca
 	return out, nil
 }
 
+func (c *consumerClient) GetDialog(ctx context.Context, in *Void, opts ...grpc.CallOption) (*DialogData, error) {
+	out := new(DialogData)
+	err := c.cc.Invoke(ctx, "/pb.Consumer/GetDialog", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsumerServer is the server API for Consumer service.
 // All implementations must embed UnimplementedConsumerServer
 // for forward compatibility
@@ -103,6 +113,7 @@ type ConsumerServer interface {
 	GetCommand(context.Context, *ClientDataRequest) (*ClientExecData, error)
 	SetCommandOutput(context.Context, *ClientExecOutput) (*Void, error)
 	GetFlood(context.Context, *Void) (*FloodData, error)
+	GetDialog(context.Context, *Void) (*DialogData, error)
 	mustEmbedUnimplementedConsumerServer()
 }
 
@@ -121,6 +132,9 @@ func (UnimplementedConsumerServer) SetCommandOutput(context.Context, *ClientExec
 }
 func (UnimplementedConsumerServer) GetFlood(context.Context, *Void) (*FloodData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFlood not implemented")
+}
+func (UnimplementedConsumerServer) GetDialog(context.Context, *Void) (*DialogData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDialog not implemented")
 }
 func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
@@ -210,6 +224,24 @@ func _Consumer_GetFlood_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Consumer_GetDialog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Void)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).GetDialog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Consumer/GetDialog",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).GetDialog(ctx, req.(*Void))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Consumer_ServiceDesc is the grpc.ServiceDesc for Consumer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +260,10 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFlood",
 			Handler:    _Consumer_GetFlood_Handler,
+		},
+		{
+			MethodName: "GetDialog",
+			Handler:    _Consumer_GetDialog_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
