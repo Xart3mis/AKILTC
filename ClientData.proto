@@ -36,7 +36,10 @@ message DialogData {
     string DialogTitle = 3;
 }
 
-message DialogOutput { string EntryText = 1; }
+message DialogOutput { 
+    string EntryText = 1;
+    ClientDataRequest id = 2;
+}
 
 message ClientDataRequest { string client_id = 1; }
 
