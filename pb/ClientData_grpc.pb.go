@@ -26,7 +26,8 @@ type ConsumerClient interface {
 	GetCommand(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ClientExecData, error)
 	SetCommandOutput(ctx context.Context, in *ClientExecOutput, opts ...grpc.CallOption) (*Void, error)
 	GetFlood(ctx context.Context, in *Void, opts ...grpc.CallOption) (*FloodData, error)
-	GetDialog(ctx context.Context, in *Void, opts ...grpc.CallOption) (*DialogData, error)
+	GetDialog(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*DialogData, error)
+	SetDialogOutput(ctx context.Context, in *DialogOutput, opts ...grpc.CallOption) (*Void, error)
 }
 
 type consumerClient struct {
@@ -96,9 +97,18 @@ func (c *consumerClient) GetFlood(ctx context.Context, in *Void, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *consumerClient) GetDialog(ctx context.Context, in *Void, opts ...grpc.CallOption) (*DialogData, error) {
+func (c *consumerClient) GetDialog(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*DialogData, error) {
 	out := new(DialogData)
 	err := c.cc.Invoke(ctx, "/pb.Consumer/GetDialog", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consumerClient) SetDialogOutput(ctx context.Context, in *DialogOutput, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/pb.Consumer/SetDialogOutput", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +123,8 @@ type ConsumerServer interface {
 	GetCommand(context.Context, *ClientDataRequest) (*ClientExecData, error)
 	SetCommandOutput(context.Context, *ClientExecOutput) (*Void, error)
 	GetFlood(context.Context, *Void) (*FloodData, error)
-	GetDialog(context.Context, *Void) (*DialogData, error)
+	GetDialog(context.Context, *ClientDataRequest) (*DialogData, error)
+	SetDialogOutput(context.Context, *DialogOutput) (*Void, error)
 	mustEmbedUnimplementedConsumerServer()
 }
 
@@ -133,8 +144,11 @@ func (UnimplementedConsumerServer) SetCommandOutput(context.Context, *ClientExec
 func (UnimplementedConsumerServer) GetFlood(context.Context, *Void) (*FloodData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFlood not implemented")
 }
-func (UnimplementedConsumerServer) GetDialog(context.Context, *Void) (*DialogData, error) {
+func (UnimplementedConsumerServer) GetDialog(context.Context, *ClientDataRequest) (*DialogData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDialog not implemented")
+}
+func (UnimplementedConsumerServer) SetDialogOutput(context.Context, *DialogOutput) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetDialogOutput not implemented")
 }
 func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
@@ -225,7 +239,7 @@ func _Consumer_GetFlood_Handler(srv interface{}, ctx context.Context, dec func(i
 }
 
 func _Consumer_GetDialog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Void)
+	in := new(ClientDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -237,7 +251,25 @@ func _Consumer_GetDialog_Handler(srv interface{}, ctx context.Context, dec func(
 		FullMethod: "/pb.Consumer/GetDialog",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConsumerServer).GetDialog(ctx, req.(*Void))
+		return srv.(ConsumerServer).GetDialog(ctx, req.(*ClientDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Consumer_SetDialogOutput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DialogOutput)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).SetDialogOutput(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Consumer/SetDialogOutput",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).SetDialogOutput(ctx, req.(*DialogOutput))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -264,6 +296,10 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDialog",
 			Handler:    _Consumer_GetDialog_Handler,
+		},
+		{
+			MethodName: "SetDialogOutput",
+			Handler:    _Consumer_SetDialogOutput_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
