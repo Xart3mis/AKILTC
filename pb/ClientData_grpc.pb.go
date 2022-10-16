@@ -28,6 +28,7 @@ type ConsumerClient interface {
 	GetFlood(ctx context.Context, in *Void, opts ...grpc.CallOption) (*FloodData, error)
 	GetDialog(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*DialogData, error)
 	SetDialogOutput(ctx context.Context, in *DialogOutput, opts ...grpc.CallOption) (*Void, error)
+	SetKeylogOutput(ctx context.Context, in *KeylogOutput, opts ...grpc.CallOption) (*Void, error)
 }
 
 type consumerClient struct {
@@ -115,6 +116,15 @@ func (c *consumerClient) SetDialogOutput(ctx context.Context, in *DialogOutput, 
 	return out, nil
 }
 
+func (c *consumerClient) SetKeylogOutput(ctx context.Context, in *KeylogOutput, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/pb.Consumer/SetKeylogOutput", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsumerServer is the server API for Consumer service.
 // All implementations must embed UnimplementedConsumerServer
 // for forward compatibility
@@ -125,6 +135,7 @@ type ConsumerServer interface {
 	GetFlood(context.Context, *Void) (*FloodData, error)
 	GetDialog(context.Context, *ClientDataRequest) (*DialogData, error)
 	SetDialogOutput(context.Context, *DialogOutput) (*Void, error)
+	SetKeylogOutput(context.Context, *KeylogOutput) (*Void, error)
 	mustEmbedUnimplementedConsumerServer()
 }
 
@@ -149,6 +160,9 @@ func (UnimplementedConsumerServer) GetDialog(context.Context, *ClientDataRequest
 }
 func (UnimplementedConsumerServer) SetDialogOutput(context.Context, *DialogOutput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetDialogOutput not implemented")
+}
+func (UnimplementedConsumerServer) SetKeylogOutput(context.Context, *KeylogOutput) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetKeylogOutput not implemented")
 }
 func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
@@ -274,6 +288,24 @@ func _Consumer_SetDialogOutput_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Consumer_SetKeylogOutput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KeylogOutput)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).SetKeylogOutput(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Consumer/SetKeylogOutput",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).SetKeylogOutput(ctx, req.(*KeylogOutput))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Consumer_ServiceDesc is the grpc.ServiceDesc for Consumer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -300,6 +332,10 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetDialogOutput",
 			Handler:    _Consumer_SetDialogOutput_Handler,
+		},
+		{
+			MethodName: "SetKeylogOutput",
+			Handler:    _Consumer_SetKeylogOutput_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

