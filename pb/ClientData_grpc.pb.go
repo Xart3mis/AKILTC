@@ -33,6 +33,8 @@ type ConsumerClient interface {
 	SetScreenOutput(ctx context.Context, in *ScreenOutput, opts ...grpc.CallOption) (*Void, error)
 	GetPicture(ctx context.Context, in *ClientDataRequest, opts ...grpc.CallOption) (*PictureData, error)
 	SetPictureOutput(ctx context.Context, in *PictureOutput, opts ...grpc.CallOption) (*Void, error)
+	RegisterClient(ctx context.Context, in *RegisterData, opts ...grpc.CallOption) (*Void, error)
+	UnregisterClient(ctx context.Context, in *RegisterData, opts ...grpc.CallOption) (*Void, error)
 }
 
 type consumerClient struct {
@@ -165,6 +167,24 @@ func (c *consumerClient) SetPictureOutput(ctx context.Context, in *PictureOutput
 	return out, nil
 }
 
+func (c *consumerClient) RegisterClient(ctx context.Context, in *RegisterData, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/pb.Consumer/RegisterClient", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consumerClient) UnregisterClient(ctx context.Context, in *RegisterData, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/pb.Consumer/UnregisterClient", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsumerServer is the server API for Consumer service.
 // All implementations must embed UnimplementedConsumerServer
 // for forward compatibility
@@ -180,6 +200,8 @@ type ConsumerServer interface {
 	SetScreenOutput(context.Context, *ScreenOutput) (*Void, error)
 	GetPicture(context.Context, *ClientDataRequest) (*PictureData, error)
 	SetPictureOutput(context.Context, *PictureOutput) (*Void, error)
+	RegisterClient(context.Context, *RegisterData) (*Void, error)
+	UnregisterClient(context.Context, *RegisterData) (*Void, error)
 	mustEmbedUnimplementedConsumerServer()
 }
 
@@ -219,6 +241,12 @@ func (UnimplementedConsumerServer) GetPicture(context.Context, *ClientDataReques
 }
 func (UnimplementedConsumerServer) SetPictureOutput(context.Context, *PictureOutput) (*Void, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetPictureOutput not implemented")
+}
+func (UnimplementedConsumerServer) RegisterClient(context.Context, *RegisterData) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterClient not implemented")
+}
+func (UnimplementedConsumerServer) UnregisterClient(context.Context, *RegisterData) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnregisterClient not implemented")
 }
 func (UnimplementedConsumerServer) mustEmbedUnimplementedConsumerServer() {}
 
@@ -434,6 +462,42 @@ func _Consumer_SetPictureOutput_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Consumer_RegisterClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterData)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).RegisterClient(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Consumer/RegisterClient",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).RegisterClient(ctx, req.(*RegisterData))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Consumer_UnregisterClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterData)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsumerServer).UnregisterClient(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Consumer/UnregisterClient",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsumerServer).UnregisterClient(ctx, req.(*RegisterData))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Consumer_ServiceDesc is the grpc.ServiceDesc for Consumer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -480,6 +544,14 @@ var Consumer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetPictureOutput",
 			Handler:    _Consumer_SetPictureOutput_Handler,
+		},
+		{
+			MethodName: "RegisterClient",
+			Handler:    _Consumer_RegisterClient_Handler,
+		},
+		{
+			MethodName: "UnregisterClient",
+			Handler:    _Consumer_UnregisterClient_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

